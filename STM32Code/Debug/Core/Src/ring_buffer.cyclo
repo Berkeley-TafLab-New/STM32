@@ -1,0 +1,5 @@
+../Core/Src/ring_buffer.c:4:6:ring_buffer_init	1
+../Core/Src/ring_buffer.c:10:9:ring_buffer_put	2
+../Core/Src/ring_buffer.c:21:9:ring_buffer_get	2
+../Core/Src/ring_buffer.c:31:10:ring_buffer_availible	1
+../Core/Src/ring_buffer.c:35:6:send_to_ring_buffer	4

@@ -1,0 +1,113 @@
+14:38:38 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-size  STM32Code.elf 
+   text	   data	    bss	    dec	    hex	filename
+  56996	    280	   9264	  66540	  103ec	STM32Code.elf
+Finished building: default.size.stdout
+ 
+14:48:09 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-size  STM32Code.elf 
+   text	   data	    bss	    dec	    hex	filename
+  56996	    280	   9264	  66540	  103ec	STM32Code.elf
+Finished building: default.size.stdout
+ 
+14:48:49 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-size  STM32Code.elf 
+   text	   data	    bss	    dec	    hex	filename
+  56996	    280	   9264	  66540	  103ec	STM32Code.elf
+Finished building: default.size.stdout
+ 
+14:51:17 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H723xx -c -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:143:11: warning: implicit declaration of function 'CDC_Transmit_HS' [-Wimplicit-function-declaration]
+  143 |           CDC_Transmit_HS(txData, sizeof(txData) - 1); //Send initial message
+      |           ^~~~~~~~~~~~~~~
+../Core/Src/main.c:147:11: error: unknown type name 'HAL_write'
+  147 |           HAL_write
+      |           ^~~~~~~~~
+../Core/Src/main.c:149:21: error: expected declaration specifiers or '...' before numeric constant
+  149 |           HAL_Delay(1000);
+      |                     ^~~~
+make: *** [Core/Src/subdir.mk:40: Core/Src/main.o] Error 1
+"make -j16 all" terminated with exit code 2. Build might be incomplete.
+14:51:38 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H723xx -c -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:143:11: warning: implicit declaration of function 'CDC_Transmit_HS' [-Wimplicit-function-declaration]
+  143 |           CDC_Transmit_HS(txData, sizeof(txData) - 1); //Send initial message
+      |           ^~~~~~~~~~~~~~~
+arm-none-eabi-gcc -o "STM32Code.elf" @"objects.list"   -mcpu=cortex-m7 -T"C:\Users\tafla\TafLabCode\STM32\STM32Code\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32Code.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: STM32Code.elf
+ 
+arm-none-eabi-size  STM32Code.elf 
+arm-none-eabi-objdump -h -S STM32Code.elf  > "STM32Code.list"
+   text	   data	    bss	    dec	    hex	filename
+  56996	    280	   9264	  66540	  103ec	STM32Code.elf
+Finished building: default.size.stdout
+ 
+Finished building: STM32Code.list
+ 
+14:54:06 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H723xx -c -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:144:11: warning: implicit declaration of function 'CDC_Transmit_HS' [-Wimplicit-function-declaration]
+  144 |           CDC_Transmit_HS(txData, sizeof(txData) - 1); //Send initial message
+      |           ^~~~~~~~~~~~~~~
+arm-none-eabi-gcc -o "STM32Code.elf" @"objects.list"   -mcpu=cortex-m7 -T"C:\Users\tafla\TafLabCode\STM32\STM32Code\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32Code.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: STM32Code.elf
+ 
+arm-none-eabi-size  STM32Code.elf 
+arm-none-eabi-objdump -h -S STM32Code.elf  > "STM32Code.list"
+   text	   data	    bss	    dec	    hex	filename
+  56996	    280	   9264	  66540	  103ec	STM32Code.elf
+Finished building: default.size.stdout
+ 
+Finished building: STM32Code.list
+ 
+15:08:26 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H723xx -c -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:144:11: warning: implicit declaration of function 'CDC_Transmit_HS' [-Wimplicit-function-declaration]
+  144 |           CDC_Transmit_HS(txData, sizeof(txData) - 1); //Send initial message
+      |           ^~~~~~~~~~~~~~~
+../Core/Src/main.c:148:47: error: expected ';' before 'HAL_Delay'
+  148 |           HAL_GPIO_TogglePin(GPIOG,GPIO_PIN_7)
+      |                                               ^
+      |                                               ;
+  149 | 
+  150 |           HAL_Delay(1000);
+      |           ~~~~~~~~~                            
+make: *** [Core/Src/subdir.mk:40: Core/Src/main.o] Error 1
+"make -j16 all" terminated with exit code 2. Build might be incomplete.
+15:08:41 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H723xx -c -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:144:11: warning: implicit declaration of function 'CDC_Transmit_HS' [-Wimplicit-function-declaration]
+  144 |           CDC_Transmit_HS(txData, sizeof(txData) - 1); //Send initial message
+      |           ^~~~~~~~~~~~~~~
+arm-none-eabi-gcc -o "STM32Code.elf" @"objects.list"   -mcpu=cortex-m7 -T"C:\Users\tafla\TafLabCode\STM32\STM32Code\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32Code.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: STM32Code.elf
+ 
+arm-none-eabi-size  STM32Code.elf 
+arm-none-eabi-objdump -h -S STM32Code.elf  > "STM32Code.list"
+   text	   data	    bss	    dec	    hex	filename
+  57060	    280	   9264	  66604	  1042c	STM32Code.elf
+Finished building: default.size.stdout
+ 
+Finished building: STM32Code.list
+ 
+15:22:35 **** Incremental Build of configuration Debug for project STM32Code ****
+make -j16 all 
+arm-none-eabi-size  STM32Code.elf 
+   text	   data	    bss	    dec	    hex	filename
+  57060	    280	   9264	  66604	  1042c	STM32Code.elf
+Finished building: default.size.stdout
+ 

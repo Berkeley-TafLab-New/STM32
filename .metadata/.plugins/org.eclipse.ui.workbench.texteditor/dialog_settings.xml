@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item key="hasShownOverlayPopupBefore" value="true"/>
+	<item key="replaceBarOpen" value="false"/>
+	<list key="searchhistory">
+		<item value="baud"/>
+		<item value="#include"/>
+		<item value="Hal_status"/>
+		<item value="hal_def"/>
+		<item value="def"/>
+		<item value="stm32h7xx_hal."/>
+		<item value="stm32h7xx"/>
+		<item value="Trans"/>
+		<item value="CDC_Transmit"/>
+		<item value="CDC_Transmit_FS"/>
+		<item value="Transmit"/>
+		<item value="callback"/>
+		<item value="declare"/>
+		<item value="extern"/>
+	</list>
+</section>
