@@ -1,0 +1,30 @@
+# Ignore everything
+*
+
+# Allow README.md
+!README.md
+
+# Allow STM32Code/Core/Src and Inc folders
+!STM32Code/
+!STM32Code/Core/
+!STM32Code/Core/Src/
+!STM32Code/Core/Inc/
+
+# Only include .c and .h files in Src and Inc
+STM32Code/Core/Src/*
+!STM32Code/Core/Src/*.c
+STM32Code/Core/Inc/*
+!STM32Code/Core/Inc/*.h
+
+# Ignore build and output folders inside Src
+STM32Code/Core/Src/build/
+STM32Code/Core/Src/output/
+
+# Ignore metadata folder completely
+.metadata/
+
+# Optional common ignores
+*.o
+*.out
+*.elf
+.DS_Store
