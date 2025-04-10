@@ -69,9 +69,9 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-/*static void AutoScanSensor(void);//wit
+static void AutoScanSensor(void);//wit
 static void SensorUartSend(uint8_t *p_data, uint32_t uiSize);
-static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum);//wit end */
+static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum);//wit end
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -82,10 +82,10 @@ int __io_putchar(int ch) {
 }
 
 uint32_t uiBuad= 115200;
-//uint8_t ucRxData = 0;
+uint8_t ucRxData = 0;
 /* this the receive function The UART receive callback is automatically called whenever data is received
  through any UART that has been configured for interrupt-driven reception*/
-/* 
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) 
 {
   if(huart->Instance == USART2)
@@ -95,7 +95,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
       printf("recieved something");
       //HAL_UART_Receive_IT(&huart2, &ucRxData, 1);
   }
-} */
+}
 
 void set_servo_angle(TIM_HandleTypeDef *htim, uint32_t channel, uint8_t angle){
   /*set a servo angle by taking the channel angle and tim 
@@ -105,11 +105,11 @@ void set_servo_angle(TIM_HandleTypeDef *htim, uint32_t channel, uint8_t angle){
   __HAL_TIM_SET_COMPARE(htim, channel, pulse_length);
 
 }
-/* 
+
 uint8_t buffer = 'hello world';
 uint8_t rx_buffer[100];
 char c = 'A'; // Character to transmit
- */
+
 /* Data Update Callback */
 
 
@@ -123,9 +123,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-/*     float fAcc[3], fGyro[3], fAngle[3], fYaw;
+    float fAcc[3], fGyro[3], fAngle[3], fYaw;
     int i;
-    ring_buffer big_buff;*/
+    ring_buffer big_buff;
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -154,12 +154,12 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-/* 
+
   WitInit(WIT_PROTOCOL_NORMAL, 0x50); // wit initialisation
   WitSerialWriteRegister(SensorUartSend);
   WitRegisterCallBack(CopeSensorData);
   AutoScanSensor();
- */
+
 
  volatile float angle;
 
@@ -172,6 +172,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //printf("hello");
+	  //check_magnet_presence(&hi2c1);
+	  //status  = HAL_UART_Transmit(&huart2, (uint8_t*)&c, 1, HAL_MAX_DELAY);
+	  //if (status != HAL_OK)
+	 //HAL_UART_Transmit(&huart2, buffer, sizeof(buffer), 100);
+	  HAL_StatusTypeDef ret = HAL_UART_Receive(&huart2, rx_buffer, sizeof(rx_buffer), 1000); // Timeout: 1000ms
+	 // if (ret == HAL_OK) {
+	 //     printf("Received Data: %s\n", rx_buffer); // Process received data
+	  //} else {
+	   //   printf("UART Receive Error\n");
+	  HAL_Delay(500);
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
 		  continue;//printf("the angle is %f", angle);
@@ -183,7 +194,7 @@ int main(void)
 	      continue; // Skip to the next iteration
 	  }
 	  HAL_Delay(500);
-/* 
+
 	printf("2");
     	HAL_Delay(500);   //����ˢ��̫��۲첻���
 	if(s_cDataUpdate)
@@ -219,7 +230,9 @@ int main(void)
           s_cDataUpdate = 0;
 		}
 
- */
+
+		//HAL_UART_Transmit(&huart3, buffer, sizeof(buffer), 100);
+
 
     /* USER CODE END WHILE */
 
@@ -439,7 +452,7 @@ static void MX_USART2_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART2_Init 2 */
-  	  //UART_Start_Receive_IT(&huart2, &ucRxData, 1);
+  	  UART_Start_Receive_IT(&huart2, &ucRxData, 1);
       //HAL_UART_Receive_IT(&huart2, &ucRxData, 1);
 
   /* USER CODE END USART2_Init 2 */
