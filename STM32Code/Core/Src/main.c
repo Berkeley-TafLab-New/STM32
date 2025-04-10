@@ -25,6 +25,7 @@
 #include "wit_c_sdk.h"//wit sdk
 #include "ring_buffer.h"
 #include "AS5600.h"
+#include "servo_controls.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,11 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ACC_UPDATE		0x01//wit begin
-#define GYRO_UPDATE		0x02
-#define ANGLE_UPDATE	0x04
-#define MAG_UPDATE		0x08
-#define READ_UPDATE		0x80//wit end
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,9 +66,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-/*static void AutoScanSensor(void);//wit
-static void SensorUartSend(uint8_t *p_data, uint32_t uiSize);
-static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum);//wit end */
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -82,36 +77,6 @@ int __io_putchar(int ch) {
 }
 
 uint32_t uiBuad= 115200;
-//uint8_t ucRxData = 0;
-/* this the receive function The UART receive callback is automatically called whenever data is received
- through any UART that has been configured for interrupt-driven reception*/
-/* 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) 
-{
-  if(huart->Instance == USART2)
-  {
-      WitSerialDataIn(ucRxData);
-      UART_Start_Receive_IT(huart, &ucRxData, 1);
-      printf("recieved something");
-      //HAL_UART_Receive_IT(&huart2, &ucRxData, 1);
-  }
-} */
-
-void set_servo_angle(TIM_HandleTypeDef *htim, uint32_t channel, uint8_t angle){
-  /*set a servo angle by taking the channel angle and tim 
-   the maths maybe works like 1.5 ms pulse width is neutral with .5 and 2.5 being either end
-   so we have a 1us count so 500us/1ms -> 500 counts and 2500us -> 2500 counts*/
-   uint32_t pulse_length = 500 +(angle*((2500-500)/180));
-  __HAL_TIM_SET_COMPARE(htim, channel, pulse_length);
-
-}
-/* 
-uint8_t buffer = 'hello world';
-uint8_t rx_buffer[100];
-char c = 'A'; // Character to transmit
- */
-/* Data Update Callback */
-
 
 /* USER CODE END 0 */
 
@@ -123,9 +88,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-/*     float fAcc[3], fGyro[3], fAngle[3], fYaw;
-    int i;
-    ring_buffer big_buff;*/
+
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -154,12 +117,6 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-/* 
-  WitInit(WIT_PROTOCOL_NORMAL, 0x50); // wit initialisation
-  WitSerialWriteRegister(SensorUartSend);
-  WitRegisterCallBack(CopeSensorData);
-  AutoScanSensor();
- */
 
  volatile float angle;
 
@@ -183,43 +140,6 @@ int main(void)
 	      continue; // Skip to the next iteration
 	  }
 	  HAL_Delay(500);
-/* 
-	printf("2");
-    	HAL_Delay(500);   //����ˢ��̫��۲첻���
-	if(s_cDataUpdate)
-		{
-			printf("3");
-			for(i = 0; i < 3; i++)
-			{
-				fAcc[i] = sReg[AX+i] / 32768.0f * 16.0f;
-				fGyro[i] = sReg[GX+i] / 32768.0f * 2000.0f;
-				fAngle[i] = sReg[Roll+i] / 32768.0f * 180.0f;
-			}
-			if(s_cDataUpdate & ACC_UPDATE)
-			{
-				printf("acc:%.3f %.3f %.3f\r\n", fAcc[0], fAcc[1], fAcc[2]);
-				s_cDataUpdate &= ~ACC_UPDATE;
-			}
-			if(s_cDataUpdate & GYRO_UPDATE)
-			{
-				printf("gyro:%.3f %.3f %.3f\r\n", fGyro[0], fGyro[1], fGyro[2]);
-				s_cDataUpdate &= ~GYRO_UPDATE;
-			}
-			if(s_cDataUpdate & ANGLE_UPDATE)
-			{
-              fYaw = (float)((unsigned short)sReg[Yaw]) / 32768 * 180.0;
-				printf("angle:%.3f %.3f %.3f(%.3f)\r\n", fAngle[0], fAngle[1], fAngle[2], fYaw);
-				s_cDataUpdate &= ~ANGLE_UPDATE;
-			}
-			if(s_cDataUpdate & MAG_UPDATE)
-			{
-				printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
-				s_cDataUpdate &= ~MAG_UPDATE;
-			}
-          s_cDataUpdate = 0;
-		}
-
- */
 
     /* USER CODE END WHILE */
 
