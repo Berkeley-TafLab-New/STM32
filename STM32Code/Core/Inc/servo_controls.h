@@ -3,11 +3,11 @@
 
 #include "stm32h7xx_hal.h"
 // Define servo control constants
-//#define SERVO_MIN_PULSE_WIDTH 500   // Minimum pulse width in microseconds
-//#define SERVO_MAX_PULSE_WIDTH 2500  // Maximum pulse width in microseconds
-//#define SERVO_FREQUENCY 50          // Servo PWM frequency in Hz
-
+float offset_angle;
+float offset_value;
 // Function prototypes
 void set_servo_angle(TIM_HandleTypeDef *htim, uint32_t channel, uint8_t angle);
-
+//void set_offset_angle();
+void set_servo_angle_gradual(TIM_HandleTypeDef *htim, uint32_t channel, float angle);
+void copy_wind_pos(TIM_HandleTypeDef *htim, uint32_t channel, float sail_angle);
 #endif // SERVO_CONTROLS_H
