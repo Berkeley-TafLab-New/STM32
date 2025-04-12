@@ -25,12 +25,16 @@
      while (desired_pulse_width != current_pulse_width){
         if (desired_pulse_width > current_pulse_width){
             current_pulse_width++; 
+            __HAL_TIM_SET_COMPARE(htim, channel, current_pulse_width);
             HAL_Delay(10);
-            current_pulse_width = __HAL_TIM_GET_COMPARE(htim, channel); 
+            current_pulse_width = __HAL_TIM_GET_COMPARE(htim, channel);
+
         }
         else if (desired_pulse_width < current_pulse_width)
         {
             current_pulse_width--; 
+            __HAL_TIM_SET_COMPARE(htim, channel, current_pulse_width);
+
             HAL_Delay(10);
             current_pulse_width = __HAL_TIM_GET_COMPARE(htim, channel); 
         }

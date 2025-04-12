@@ -119,9 +119,11 @@ int main(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
  volatile float angle;
- set_servo_angle(&htim1,TIM_CHANNEL_1, 90); // debug
+ printf("turning");
+ set_servo_angle(&htim1,TIM_CHANNEL_1, 180); // debug
+ printf("turned now once more");
  set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
-
+ printf("done");
 
 
   /* USER CODE END 2 */
@@ -130,6 +132,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  printf("hello");
+
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
 		  continue;//printf("the angle is %f", angle);

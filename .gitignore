@@ -28,3 +28,5 @@ STM32Code/Core/Src/output/
 *.out
 *.elf
 .DS_Store
+
+/STM32Code/Debug
