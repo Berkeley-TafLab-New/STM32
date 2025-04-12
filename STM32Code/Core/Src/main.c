@@ -35,7 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define COMMAND_MAX_LENGTH 64 //Uart Commands max size
+#define RESPONSE_MAX_LENGTH 128// Uart response max size
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,17 +45,22 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
+//I2C defs
 I2C_HandleTypeDef hi2c1;
-
+//tim defs
 TIM_HandleTypeDef htim1;
-
+//uart defs
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 //wit variables ->
 static char s_cDataUpdate = 0;//wit update var
+
+//uart interrupts defs
+ring_buffer uart_ring_buffer;
+uint8_t rx_data_s; // Single byte for receiving data
+char command_buffer[COMMAND_MAX_LENGTH]; // To hold the extracted command
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,6 +83,53 @@ int __io_putchar(int ch) {
 }
 
 uint32_t uiBuad= 115200;
+
+//uart interrupt ring buffer init
+void System_Init(void) {
+  // Initialize ring buffer
+  ring_buffer_init(&uart_ring_buffer);
+
+  // Start UART reception in interrupt mode
+  HAL_UART_Receive_IT(&huart3, &rx_data_s, 1);
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART3) { // Ensure this is for the correct UART instance
+      // Add received byte to the ring buffer
+      ring_buffer_put(&uart_ring_buffer, rx_data_s);
+
+      // Check if we received a carriage return '\r' (end of command)
+      if (rx_data_s == '\r') {
+          uint8_t data;
+          uint16_t index = 0;
+
+          // Extract the command from the ring buffer
+          while (ring_buffer_get(&uart_ring_buffer, &data) && data != '\r' && index < COMMAND_MAX_LENGTH - 1) {
+              command_buffer[index++] = (char)data;
+          }
+          command_buffer[index] = '\0'; // Null-terminate the string
+
+          // Process the command
+          const char *response;
+          if (strcmp(command_buffer, "hello") == 0) {
+              response = "Hello to you too!\n";
+          } else {
+              response = "Uh oh, something didn't work...\n";
+          }
+
+          // Transmit the response
+          HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
+
+          // Clear the command buffer for reuse
+          memset(command_buffer, 0, COMMAND_MAX_LENGTH);
+      }
+
+      // Re-enable UART interrupt for next byte reception
+      HAL_UART_Receive_IT(&huart3, &rx_data_s, 1);
+  }
+}
+
+
 
 /* USER CODE END 0 */
 
@@ -106,7 +159,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  System_Init(); 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
