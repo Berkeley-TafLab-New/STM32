@@ -296,6 +296,11 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
+  sConfigOC.Pulse = 1500;
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
@@ -334,7 +339,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -453,7 +458,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
+/* static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
 {
   HAL_UART_Transmit(&huart2, p_data, uiSize, uiSize*4);
 }
@@ -510,7 +515,7 @@ static void AutoScanSensor(void)
 	}
 	printf("can not find sensor\r\n");
 	printf("please check your connection\r\n");
-}
+} */
 /* USER CODE END 4 */
 
  /* MPU Configuration */

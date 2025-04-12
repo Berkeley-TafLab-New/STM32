@@ -42,7 +42,7 @@
     then the the angle can be calculated as such */
     // do this
     
-    set_servo_angle(htim, channel, offset_angle);
+    //set_servo_angle(htim, channel, offset_angle);
   }
 
   //calibration sequence set servo angle to 90 from there it has 90 degrees of play in either direction
