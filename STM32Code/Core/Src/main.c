@@ -120,7 +120,7 @@ int main(void)
 
  volatile float angle;
  printf("turning");
- set_servo_angle(&htim1,TIM_CHANNEL_1, 180); // debug
+ set_servo_angle(&htim1,TIM_CHANNEL_1, 90); // debug
  printf("turned now once more");
  set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
  printf("done");
