@@ -10,6 +10,8 @@
 #include "servo_controls.h"
 #include "stdint.h"
 
+
+
  void set_servo_angle(TIM_HandleTypeDef *htim, uint32_t channel, float angle){
     /*set a servo angle by taking the channel angle and tim 
      the maths maybe works like 1.5 ms pulse width is neutral with .5 and 2.5 being either end
@@ -48,7 +50,7 @@
       
     }
   }
-  void copy_wind_pos(ServoController *ctrl,  float wind_angle){
+  void copy_wind_pos(ServoController *ctrl, float wind_angle){
     float adj_angle=  fmod(wind_angle, 180.0f);  //all opposite angles are the same so 200 degrees = 20 degrees 
     
     // explicit case for 180 degrees
@@ -61,12 +63,5 @@
 
     //set_servo_angle();
   }
-  
-  typedef struct {
-    uint32_t current_pulse;
-    uint32_t target_pulse;
-    TIM_HandleTypeDef *htim;
-    uint32_t channel;
-} ServoController;
-  //calibration sequence set servo angle to 90 from there it has 90 degrees of play in either direction
+//ence set servo angle to 90 from there it has 90 degrees of play in either direction
 

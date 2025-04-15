@@ -121,31 +121,33 @@ int main(void)
  volatile float angle;
  printf("turning");
  set_servo_angle(&htim1,TIM_CHANNEL_1, 90); // debug
- printf("turned now once more");
- set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
+ //printf("turned now once more");
+ //set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
  printf("done");
 
-
+ ServoController sail_servo;
+ sail_servo.htim= &htim1;
+ sail_servo.channel = TIM_CHANNEL_1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  printf("hello");
-
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
-		  continue;//printf("the angle is %f", angle);
+		  printf("the angle is %f", angle);
 	  }
-
 	  
-    
 	  if (i2c_status != HAL_OK) {
 	      printf("Error reading angle from AS5600\n");
 	      continue; // Skip to the next iteration
 	  }
+
+	  copy_wind_pos(&sail_servo, angle);
+
 	  HAL_Delay(500);
+
 
     /* USER CODE END WHILE */
 
