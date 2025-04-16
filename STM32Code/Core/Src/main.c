@@ -165,7 +165,7 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-
+  System_Init();
  volatile float angle;
  //printf("turning");
  //set_servo_angle(&htim1,TIM_CHANNEL_1, 90); // debug
