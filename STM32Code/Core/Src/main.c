@@ -45,11 +45,11 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-//I2C defs
+
 I2C_HandleTypeDef hi2c1;
-//tim defs
+
 TIM_HandleTypeDef htim1;
-//uart defs
+
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 
@@ -96,6 +96,7 @@ void System_Init(void) {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART3) { // Ensure this is for the correct UART instance
       // Add received byte to the ring buffer
+	  printf("Received");
       ring_buffer_put(&uart_ring_buffer, rx_data_s);
 
       // Check if we received a carriage return '\r' (end of command)
@@ -159,7 +160,6 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  System_Init(); 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -169,13 +169,17 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  System_Init();
+
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
- volatile float angle;
+ float angle;
+
+ //HAL_UART_Receive(&huart3, &rx_data_s,1, HAL_MAX_DELAY);
  printf("turning");
- set_servo_angle(&htim1,TIM_CHANNEL_1, 180); // debug
+ set_servo_angle(&htim1,TIM_CHANNEL_1, 0); // debug
  printf("turned now once more");
- set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
+//set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
  printf("done");
 
 
@@ -184,21 +188,23 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-	  printf("hello");
+  {	/*
+	  if (ring_buffer_availible(&uart_ring_buffer) > 0) {
+	         printf("Received data: ...\r\n"); // Process and print
+	     }
 
-	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
-	  if (i2c_status== HAL_OK){
-		  continue;//printf("the angle is %f", angle);
-	  }
+	     // 2. Non-blocking servo control
+	     static uint32_t last_servo_update = 0;
+	     if (HAL_GetTick() - last_servo_update > 1000) { // Update every 1s
+	         angle += 5;
+	         set_servo_angle(&htim1, TIM_CHANNEL_1, angle);
+	         last_servo_update = HAL_GetTick();
+	     }
 
-	  
-    
-	  if (i2c_status != HAL_OK) {
-	      printf("Error reading angle from AS5600\n");
-	      continue; // Skip to the next iteration
-	  }
-	  HAL_Delay(500);
+	     // 3. Optional: Add minimal delay to prevent CPU overload
+	  */
+	  	  printf("waiting");
+	     HAL_Delay(10);
 
     /* USER CODE END WHILE */
 
@@ -510,6 +516,13 @@ static void MX_GPIO_Init(void)
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
+  /* Configure USART3 TX (PD8) and RX (PD9) */
+  GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART3; // AF7 for USART3
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
