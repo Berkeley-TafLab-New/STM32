@@ -80,7 +80,9 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 int __io_putchar(int ch) {
-    HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+     //HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY); enable to get debug over STLINK
+
     return ch;
 }
 //uart interrupt ring buffer init
@@ -88,7 +90,8 @@ void System_Init(void) {
   // Initialize ring buffer
   ring_buffer_init(&uart_ring_buffer);
   // Start UART reception in interrupt mode
-  HAL_UART_Receive_IT(&huart3, &rx_data_s, 1);
+  HAL_UART_Receive_IT(&huart3, &rx_data_s, 1); // initialising Stlink interrupts
+  HAL_UART_Receive_IT(&huart2, &rx_data_s, 1); // initialising XBee interrupts 
  }
  
 
@@ -121,6 +124,36 @@ void System_Init(void) {
       // Re-enable UART interrupt for next byte reception
       HAL_UART_Receive_IT(&huart3, &rx_data_s, 1);
   }
+    
+  if (huart->Instance == USART2) { // Ensure this is for the correct UART instance
+    // Add received byte to the ring buffer
+  printf("Received");
+    ring_buffer_put(&uart_ring_buffer, rx_data_s);
+    // Check if we received a carriage return '\r' (end of command)
+    if (rx_data_s == '\r') {
+        uint8_t data;
+        uint16_t index = 0;
+        // Extract the command from the ring buffer
+        while (ring_buffer_get(&uart_ring_buffer, &data) && data != '\r' && index < COMMAND_MAX_LENGTH - 1) {
+            command_buffer[index++] = (char)data;
+        }
+        command_buffer[index] = '\0'; // Null-terminate the string
+        // Process the command
+        const char *response;
+        if (strcmp(command_buffer, "hello XBEEEEEEEXBEEEEEEEXBEEEEEEEXBEEEEEEE") == 0) {
+            response = "Hello to you too!\n";
+        } else {
+            response = "Uh oh, something XBEEEEEEE didn't work...\n";
+        }
+        // Transmit the response
+        HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
+        // Clear the command buffer for reuse
+        memset(command_buffer, 0, COMMAND_MAX_LENGTH);
+    }
+    // Re-enable UART interrupt for next byte reception
+    HAL_UART_Receive_IT(&huart3, &rx_data_s, 1);
+}
+
  }
 /* USER CODE END 0 */
 
@@ -169,7 +202,9 @@ int main(void)
  //printf("turned now once more");
  //set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
  printf("booting");
-
+ char str[] = "Hello";
+ HAL_UART_Transmit(&huart3, (uint8_t*)str, strlen(str), 1000);
+ 
  ServoController sail_servo;
  sail_servo.htim= &htim1;
  sail_servo.channel = TIM_CHANNEL_1;
@@ -178,7 +213,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {/*
+  {
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
 		  printf("the angle is %f", angle);
@@ -193,9 +228,8 @@ int main(void)
 
     
 	  HAL_Delay(500);
-    */
+
     printf("hold");
-    HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -560,6 +594,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF7_USART3; // AF7 for USART3
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* Configure USART2 TX (PD5) and RX (PD6) */
+  GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART2; // AF7 for USART2
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+ /* USER CODE END MX_GPIO_Init_2 */
+
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
