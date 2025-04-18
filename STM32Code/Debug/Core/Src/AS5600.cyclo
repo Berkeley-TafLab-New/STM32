@@ -1,3 +1,4 @@
 ../Core/Src/AS5600.c:13:19:AS5600_read_angle	2
 ../Core/Src/AS5600.c:27:9:check_magnet_presence	3
-../Core/Src/AS5600.c:47:6:handle_error	2
+../Core/Src/AS5600.c:49:19:AS5600_config_ZPOS	3
+../Core/Src/AS5600.c:87:6:handle_error	2

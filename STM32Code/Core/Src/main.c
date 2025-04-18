@@ -38,6 +38,12 @@
 #define COMMAND_MAX_LENGTH 64 //Uart Commands max size
 #define RESPONSE_MAX_LENGTH 128// Uart response max size
 
+//wit defines ->
+#define ACC_UPDATE		0x01
+#define GYRO_UPDATE		0x02
+#define ANGLE_UPDATE	0x04
+#define MAG_UPDATE		0x08
+#define READ_UPDATE		0x80
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,7 +67,10 @@ static char s_cDataUpdate = 0;//wit update var
 //defs
 ring_buffer uart_ring_buffer;
 uint8_t rx_data_s; // Single byte for receiving data
+uint8_t rx_data_xbee; //single Byte from Xbee
+uint8_t ucRxData = 0;//Single Byte Rx fOr Witmotion
 char command_buffer[COMMAND_MAX_LENGTH]; // To hold the extracted command
+uint32_t uiBuad = 115200;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,6 +84,11 @@ static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
+//wit function prototypes ->
+
+static void AutoScanSensor(void);
+static void SensorUartSend(uint8_t *p_data, uint32_t uiSize);
+static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -91,11 +105,22 @@ void System_Init(void) {
   ring_buffer_init(&uart_ring_buffer);
   // Start UART reception in interrupt mode
   HAL_UART_Receive_IT(&huart3, &rx_data_s, 1); // initialising Stlink interrupts
-  HAL_UART_Receive_IT(&huart2, &rx_data_s, 1); // initialising XBee interrupts 
+  HAL_UART_Receive_IT(&huart2, &rx_data_xbee, 1); // initialising XBee interrupts
+  UART_Start_Receive_IT(&huart1, &ucRxData, 1);
+
  }
  
 
  void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+
+
+  if(huart->Instance==USART1)
+	   {
+	       WitSerialDataIn(ucRxData);
+	       UART_Start_Receive_IT(huart, &ucRxData, 1);
+	   }
+
+
   if (huart->Instance == USART3) { // Ensure this is for the correct UART instance
       // Add received byte to the ring buffer
      printf("Received");
@@ -127,32 +152,32 @@ void System_Init(void) {
     
   if (huart->Instance == USART2) { // Ensure this is for the correct UART instance
     // Add received byte to the ring buffer
-  printf("Received");
-    ring_buffer_put(&uart_ring_buffer, rx_data_s);
-    // Check if we received a carriage return '\r' (end of command)
-    if (rx_data_s == '\r') {
-        uint8_t data;
-        uint16_t index = 0;
-        // Extract the command from the ring buffer
-        while (ring_buffer_get(&uart_ring_buffer, &data) && data != '\r' && index < COMMAND_MAX_LENGTH - 1) {
-            command_buffer[index++] = (char)data;
-        }
-        command_buffer[index] = '\0'; // Null-terminate the string
-        // Process the command
-        const char *response;
-        if (strcmp(command_buffer, "hello XBEEEEEEEXBEEEEEEEXBEEEEEEEXBEEEEEEE") == 0) {
-            response = "Hello to you too!\n";
-        } else {
-            response = "Uh oh, something XBEEEEEEE didn't work...\n";
-        }
-        // Transmit the response
-        HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
-        // Clear the command buffer for reuse
-        memset(command_buffer, 0, COMMAND_MAX_LENGTH);
-    }
-    // Re-enable UART interrupt for next byte reception
-    HAL_UART_Receive_IT(&huart3, &rx_data_s, 1);
-}
+	  printf("Received");
+		ring_buffer_put(&uart_ring_buffer, rx_data_xbee);
+		// Check if we received a carriage return '\r' (end of command)
+		if (rx_data_xbee == '\r') {
+			uint8_t data;
+			uint16_t index = 0;
+			// Extract the command from the ring buffer
+			while (ring_buffer_get(&uart_ring_buffer, &data) && data != '\r' && index < COMMAND_MAX_LENGTH - 1) {
+				command_buffer[index++] = (char)data;
+			}
+			command_buffer[index] = '\0'; // Null-terminate the string
+			// Process the command
+			const char *response;
+			if (strcmp(command_buffer, "hello") == 0) {
+				response = "Hello to you Xboo!\n";
+			} else {
+				response = "Uh oh, something XBEEEEEEE didn't work...\n";
+			}
+			// Transmit the response
+			HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
+			// Clear the command buffer for reuse
+			memset(command_buffer, 0, COMMAND_MAX_LENGTH);
+		}
+		// Re-enable UART interrupt for next byte reception
+		HAL_UART_Receive_IT(&huart2, &rx_data_xbee, 1);
+  	  }
 
  }
 /* USER CODE END 0 */
@@ -165,7 +190,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  float fAcc[3], fGyro[3], fAngle[3], fYaw;
+  int i;
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -189,25 +215,29 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM1_Init();
-  MX_USART3_UART_Init();
-  MX_USART2_UART_Init();
-  MX_I2C1_Init();
   MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+
+
+  WitInit(WIT_PROTOCOL_NORMAL, 0x50);
+  WitSerialWriteRegister(SensorUartSend);
+  WitRegisterCallBack(CopeSensorData);
+
   System_Init();
+  //AutoScanSensor();
+
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  volatile float angle;
- //printf("turning");
- //set_servo_angle(&htim1,TIM_CHANNEL_1, 90); // debug
- //printf("turned now once more");
- //set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
- printf("booting");
- char str[] = "Hello";
- HAL_UART_Transmit(&huart3, (uint8_t*)str, strlen(str), 1000);
+
+  float angle;
+  char str[] = "Hello";
+  HAL_UART_Transmit(&huart3, (uint8_t*)str, strlen(str), 1000);
  
- ServoController sail_servo;
- sail_servo.htim= &htim1;
- sail_servo.channel = TIM_CHANNEL_1;
+  ServoController sail_servo;
+  sail_servo.htim= &htim1;
+  sail_servo.channel = TIM_CHANNEL_1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -226,10 +256,42 @@ int main(void)
     
 	  copy_wind_pos(&sail_servo, angle);
 
-    
-	  HAL_Delay(500);
-
     printf("hold");
+
+
+
+    if(s_cDataUpdate)
+    		{
+    			printf("3");
+    			for(i = 0; i < 3; i++)
+    			{
+    				fAcc[i] = sReg[AX+i] / 32768.0f * 16.0f;
+    				fGyro[i] = sReg[GX+i] / 32768.0f * 2000.0f;
+    				fAngle[i] = sReg[Roll+i] / 32768.0f * 180.0f;
+    			}
+    			if(s_cDataUpdate & ACC_UPDATE)
+    			{
+    				printf("acc:%.3f %.3f %.3f\r\n", fAcc[0], fAcc[1], fAcc[2]);
+    				s_cDataUpdate &= ~ACC_UPDATE;
+    			}
+    			if(s_cDataUpdate & GYRO_UPDATE)
+    			{
+    				printf("gyro:%.3f %.3f %.3f\r\n", fGyro[0], fGyro[1], fGyro[2]);
+    				s_cDataUpdate &= ~GYRO_UPDATE;
+    			}
+    			if(s_cDataUpdate & ANGLE_UPDATE)
+    			{
+                    fYaw = (float)((unsigned short)sReg[Yaw]) / 32768 * 180.0;
+    				printf("angle:%.3f %.3f %.3f(%.3f)\r\n", fAngle[0], fAngle[1], fAngle[2], fYaw);
+    				s_cDataUpdate &= ~ANGLE_UPDATE;
+    			}
+    			if(s_cDataUpdate & MAG_UPDATE)
+    			{
+    				printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
+    				s_cDataUpdate &= ~MAG_UPDATE;
+    			}
+                s_cDataUpdate = 0;
+    		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -384,7 +446,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.Pulse = 1500;
-  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  icdf (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -426,7 +488,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = uiBuad;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -570,10 +632,10 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -602,14 +664,24 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF7_USART2; // AF7 for USART2
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
- /* USER CODE END MX_GPIO_Init_2 */
+
+
+  /* Configure USART1 TX (PA9) and RX (PA10) */
+  GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL; // Or GPIO_PULLUP for RX if needed
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART1; // AF7 for USART1
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /* USER CODE END MX_GPIO_Init_USART1 */
+
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 
-/* static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
+static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
 {
   HAL_UART_Transmit(&huart2, p_data, uiSize, uiSize*4);
 }
@@ -666,7 +738,7 @@ static void AutoScanSensor(void)
 	}
 	printf("can not find sensor\r\n");
 	printf("please check your connection\r\n");
-} */
+}
 /* USER CODE END 4 */
 
  /* MPU Configuration */
