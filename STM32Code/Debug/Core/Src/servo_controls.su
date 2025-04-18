@@ -1,0 +1,3 @@
+../Core/Src/servo_controls.c:13:7:set_servo_angle	32	static
+../Core/Src/servo_controls.c:21:8:set_servo_angle_gradual	32	static
+../Core/Src/servo_controls.c:44:8:copy_wind_pos	24	static
