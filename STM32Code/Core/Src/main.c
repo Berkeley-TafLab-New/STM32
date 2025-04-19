@@ -136,8 +136,15 @@ void System_Init(void) {
           command_buffer[index] = '\0'; // Null-terminate the string
           // Process the command
           const char *response;
+          const char *response;
           if (strcmp(command_buffer, "hello") == 0) {
               response = "Hello to you too!\n";
+          } else if (strcmp(command_buffer, "setzero") == 0) {
+              if (AS5600_config_ZPOS(&hi2c1) == HAL_OK) {
+                  response = "ZPOS set successfully.\n";
+              } else {
+                  response = "Failed to set ZPOS.\n";
+              }
           } else {
               response = "Uh oh, something didn't work...\n";
           }
