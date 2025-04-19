@@ -66,6 +66,8 @@ UART_HandleTypeDef huart3;
 static char s_cDataUpdate = 0;//wit update var
 //defs
 ring_buffer uart_ring_buffer;
+ring_buffer uart2_ring_buffer;   // Separate buffer for USART2 (XBee)
+uint8_t rx_data_uart2;           // 1-byte RX variable for USART2
 uint8_t rx_data_s; // Single byte for receiving data
 uint8_t rx_data_xbee; //single Byte from Xbee
 uint8_t ucRxData = 0;//Single Byte Rx fOr Witmotion
@@ -105,7 +107,9 @@ void System_Init(void) {
   ring_buffer_init(&uart_ring_buffer);
   // Start UART reception in interrupt mode
   HAL_UART_Receive_IT(&huart3, &rx_data_s, 1); // initialising Stlink interrupts
-  HAL_UART_Receive_IT(&huart2, &rx_data_xbee, 1); // initialising XBee interrupts
+  ring_buffer_init(&uart2_ring_buffer);
+  HAL_UART_Receive_IT(&huart2, &rx_data_uart2, 1);
+
   UART_Start_Receive_IT(&huart1, &ucRxData, 1);
 
  }
@@ -157,34 +161,38 @@ void System_Init(void) {
       HAL_UART_Receive_IT(&huart3, &rx_data_s, 1);
   }
     
-  if (huart->Instance == USART2) { // Ensure this is for the correct UART instance
-    // Add received byte to the ring buffer
-	  printf("Received");
-		ring_buffer_put(&uart_ring_buffer, rx_data_xbee);
-		// Check if we received a carriage return '\r' (end of command)
-		if (rx_data_xbee == '\r') {
-			uint8_t data;
-			uint16_t index = 0;
-			// Extract the command from the ring buffer
-			while (ring_buffer_get(&uart_ring_buffer, &data) && data != '\r' && index < COMMAND_MAX_LENGTH - 1) {
-				command_buffer[index++] = (char)data;
-			}
-			command_buffer[index] = '\0'; // Null-terminate the string
-			// Process the command
-			const char *response;
-			if (strcmp(command_buffer, "hello") == 0) {
-				response = "Hello to you Xboo!\n";
-			} else {
-				response = "Uh oh, something XBEEEEEEE didn't work...\n";
-			}
-			// Transmit the response
-			HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
-			// Clear the command buffer for reuse
-			memset(command_buffer, 0, COMMAND_MAX_LENGTH);
-		}
-		// Re-enable UART interrupt for next byte reception
-		HAL_UART_Receive_IT(&huart2, &rx_data_xbee, 1);
-  	  }
+  if (huart->Instance == USART2) {
+    ring_buffer_put(&uart2_ring_buffer, rx_data_uart2);
+
+    if (rx_data_uart2 == '\r') {
+        uint8_t data;
+        uint16_t index = 0;
+
+        while (ring_buffer_get(&uart2_ring_buffer, &data) && data != '\r' && index < COMMAND_MAX_LENGTH - 1) {
+            command_buffer[index++] = (char)data;
+        }
+        command_buffer[index] = '\0';
+
+        const char *response;
+        if (strcmp(command_buffer, "hello") == 0) {
+            response = "Hello to you Xbee!\n";
+        } else if (strcmp(command_buffer, "setzero") == 0) {
+            if (AS5600_config_ZPOS(&hi2c1) == HAL_OK) {
+                response = "ZPOS set successfully.\n";
+            } else {
+                response = "Failed to set ZPOS.\n";
+            }
+        } else {
+            response = "Unrecognized command from XBee\n";
+        }
+
+        HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
+        memset(command_buffer, 0, COMMAND_MAX_LENGTH);
+    }
+
+    HAL_UART_Receive_IT(&huart2, &rx_data_uart2, 1); // Restart interrupt
+  }
+
 
  }
 /* USER CODE END 0 */
