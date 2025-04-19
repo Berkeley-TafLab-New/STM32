@@ -65,7 +65,8 @@ UART_HandleTypeDef huart3;
 //wit variables ->
 static char s_cDataUpdate = 0;//wit update var
 //defs
-ring_buffer uart_ring_buffer;
+ring_buffer uart_ring_buffer;// Uart3 ring buffer
+ring_buffer uart2_ring_buffer;
 uint8_t rx_data_s; // Single byte for receiving data
 uint8_t rx_data_xbee; //single Byte from Xbee
 uint8_t ucRxData = 0;//Single Byte Rx fOr Witmotion
@@ -106,7 +107,7 @@ void System_Init(void) {
   // Start UART reception in interrupt mode
   HAL_UART_Receive_IT(&huart3, &rx_data_s, 1); // initialising Stlink interrupts
   HAL_UART_Receive_IT(&huart2, &rx_data_xbee, 1); // initialising XBee interrupts
-  UART_Start_Receive_IT(&huart1, &ucRxData, 1);
+  HAL_UART_Receive_IT(&huart1, &ucRxData, 1);
 
  }
  
@@ -227,14 +228,14 @@ int main(void)
   WitRegisterCallBack(CopeSensorData);
 
   System_Init();
-  //AutoScanSensor();
+  AutoScanSensor();
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   float angle;
-  char str[] = "Hello";
-  HAL_UART_Transmit(&huart3, (uint8_t*)str, strlen(str), 1000);
- 
+  char str[] = "System Booted";
+  HAL_UART_Transmit(&huart3, (uint8_t*)str, strlen(str), 2000);
+  HAL_Delay(500);
   ServoController sail_servo;
   sail_servo.htim= &htim1;
   sail_servo.channel = TIM_CHANNEL_1;
@@ -246,7 +247,7 @@ int main(void)
   {
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
-		  printf("the angle is %f", angle);
+		  printf("the angle is %f \n", angle);
 	  }
 	  
 	  if (i2c_status != HAL_OK) {
@@ -255,9 +256,6 @@ int main(void)
 	  }
     
 	  copy_wind_pos(&sail_servo, angle);
-
-    printf("hold");
-
 
 
     if(s_cDataUpdate)
@@ -446,7 +444,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.Pulse = 1500;
-  icdf (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -488,7 +486,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = uiBuad;
+  huart1.Init.BaudRate = 9600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -564,7 +562,7 @@ static void MX_USART2_UART_Init(void)
   }
   /* USER CODE BEGIN USART2_Init 2 */
   	  //UART_Start_Receive_IT(&huart2, &ucRxData, 1);
-      //HAL_UART_Receive_IT(&huart2, &ucRxData, 1);
+      //HAL_UART_Receive_IT(&huart1, &ucRxData, 1);
 
   /* USER CODE END USART2_Init 2 */
 
@@ -683,7 +681,7 @@ static void MX_GPIO_Init(void)
 
 static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
 {
-  HAL_UART_Transmit(&huart2, p_data, uiSize, uiSize*4);
+  HAL_UART_Transmit(&huart3, p_data, uiSize, uiSize*4);
 }
 static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum)
 {
@@ -720,7 +718,6 @@ static void AutoScanSensor(void)
 	for(i = 0; i < 9; i++)
 	{
         uiBuad = c_uiBaud[i];
-        MX_USART2_UART_Init();
         HAL_Delay(250); // Settling time
 		iRetry = 2;
 		do

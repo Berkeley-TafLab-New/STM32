@@ -20,6 +20,7 @@ STM32Code/Core/Inc/*
 STM32Code/Core/Src/build/
 STM32Code/Core/Src/output/
 
+STM32Code/Debug
 # Ignore metadata folder completely
 .metadata/
 
