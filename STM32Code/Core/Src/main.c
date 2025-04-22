@@ -43,6 +43,7 @@
 #define GYRO_UPDATE		0x02
 #define ANGLE_UPDATE	0x04
 #define MAG_UPDATE		0x08
+#define GPS_UPDATE    0x10 
 #define READ_UPDATE		0x80
 /* USER CODE END PD */
 
@@ -139,7 +140,6 @@ void System_Init(void) {
           }
           command_buffer[index] = '\0'; // Null-terminate the string
           // Process the command
-          const char *response;
           const char *response;
           if (strcmp(command_buffer, "hello") == 0) {
               response = "Hello to you too!\n";
@@ -275,6 +275,9 @@ int main(void)
     if(s_cDataUpdate)
     		{
     			printf("3");
+            // Assumes AX, AY, AZ are sequential registers starting at AX
+            // Assumes GX, GY, GZ are sequential registers starting at GX
+            // Assumes Roll, Pitch, Yaw are sequential registers starting at Roll
     			for(i = 0; i < 3; i++)
     			{
     				fAcc[i] = sReg[AX+i] / 32768.0f * 16.0f;
@@ -302,6 +305,51 @@ int main(void)
     				printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
     				s_cDataUpdate &= ~MAG_UPDATE;
     			}
+          if(s_cDataUpdate & GPS_UPDATE)
+          {
+            // Combine high/low registers for 32-bit values and apply scaling 
+            // Use int32_t for intermediate signed 32-bit values
+            // Use uint16_t cast for low words when combining to avoid sign extension issues
+            // Use float for final calculated values
+
+            // Longitude & Latitude Calculation
+            int32_t iLon = ((int32_t)(short)sReg[LonH] << 16) | (uint16_t)sReg[LonL];
+            int32_t iLat = ((int32_t)(short)sReg[LatH] << 16) | (uint16_t)sReg[LatL];
+
+            // Convert from ddmm.mmmmm format (scaled by 100000) to decimal degrees
+            float fLon_deg = (float)(iLon / 10000000); // Extract degrees (dd)
+            float fLon_min = (float)((iLon % 10000000) / 100000.0f); // Extract minutes (mm.mmmmm)
+            float fLongitude = fLon_deg + fLon_min / 60.0f;
+
+            float fLat_deg = (float)(iLat / 10000000); // Extract degrees (dd)
+            float fLat_min = (float)((iLat % 10000000) / 100000.0f); // Extract minutes (mm.mmmmm)
+            float fLatitude = fLat_deg + fLat_min / 60.0f;
+
+            // GPS Altitude (m)
+            float fGpsAltitude = (float)(short)sReg[GPSHeight] / 10.0f;
+
+            // GPS Heading/Course (°). Note: This is course over ground, not magnetic heading.
+            float fGpsCourse = (float)(short)sReg[GPSYAW] / 100.0f;
+
+            // GPS Ground Speed (km/h)
+            int32_t iGpsSpeed = ((int32_t)(short)sReg[GPSVH] << 16) | (uint16_t)sReg[GPSVL];
+            float fGpsSpeed_kmh = (float)iGpsSpeed / 1000.0f;
+
+            // Satellite Info & Accuracy Metrics
+            int iSatellites = (uint16_t)sReg[SVNUM]; // Number of satellites is likely unsigned
+            float fPDOP = (float)(short)sReg[PDOP] / 100.0f;
+            float fHDOP = (float)(short)sReg[HDOP] / 100.0f;
+            float fVDOP = (float)(short)sReg[VDOP] / 100.0f;
+
+            // Print the GPS data
+            printf("GPS Lat: %.6f, Lon: %.6f, Alt: %.1fm\r\n", fLatitude, fLongitude, fGpsAltitude);
+            printf("GPS Spd: %.3fkm/h, Course: %.2fdeg\r\n", fGpsSpeed_kmh, fGpsCourse);
+            printf("GPS Sats: %d, PDOP: %.2f, HDOP: %.2f, VDOP: %.2f\r\n", iSatellites, fPDOP, fHDOP, fVDOP);
+
+            // Clear the GPS update flag
+            s_cDataUpdate &= ~GPS_UPDATE;
+        }
+
                 s_cDataUpdate = 0;
     		}
     /* USER CODE END WHILE */
@@ -716,6 +764,22 @@ static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum)
             case Yaw:
 				s_cDataUpdate |= ANGLE_UPDATE;
             break;
+
+            case LonL:
+            case LonH:
+            case LatL:
+            case LatH:
+            case GPSHeight:
+            case GPSYAW:
+            case GPSVL:
+            case GPSVH:
+            case SVNUM:
+            case PDOP:
+            case HDOP:
+            case VDOP:
+        s_cDataUpdate |= GPS_UPDATE;
+            break;
+
             default:
 				s_cDataUpdate |= READ_UPDATE;
 			break;
