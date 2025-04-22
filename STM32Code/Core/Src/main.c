@@ -122,17 +122,11 @@ int main(void)
   rudder_init(&htim1, TIM_CHANNEL_2);     // Initialize the rudder
 
  volatile float angle;
-<<<<<<< HEAD
  printf("turning");
  set_servo_angle(&htim1,TIM_CHANNEL_1, 90); // debug
  //printf("turned now once more");
  //set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
  printf("done");
-=======
- set_servo_angle(&htim1,TIM_CHANNEL_1, 90); // debug
- set_servo_angle_gradual(&htim1, TIM_CHANNEL_1,0);
-
->>>>>>> 185885c (working on rudder control)
 
  ServoController sail_servo;
  sail_servo.htim= &htim1;
@@ -147,12 +141,9 @@ int main(void)
 	  if (i2c_status== HAL_OK){
 		  printf("the angle is %f", angle);
 	  }
-<<<<<<< HEAD
-=======
 
     rudder_turn_to(90, 45);        // heading = 90, target = 45
     rudder_move_to();              // smoothly move rudder to target position
->>>>>>> 185885c (working on rudder control)
 	  
 	  if (i2c_status != HAL_OK) {
 	      printf("Error reading angle from AS5600\n");
