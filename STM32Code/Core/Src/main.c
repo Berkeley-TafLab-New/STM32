@@ -261,7 +261,7 @@ int main(void)
   {
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
-		  printf("the angle is %f \n", angle);
+		 // printf("the angle is %f \n", angle);
 	  }
 	  
 	  if (i2c_status != HAL_OK) {
@@ -284,6 +284,42 @@ int main(void)
     				fGyro[i] = sReg[GX+i] / 32768.0f * 2000.0f;
     				fAngle[i] = sReg[Roll+i] / 32768.0f * 180.0f;
     			}
+
+    			// Combine high/low registers for 32-bit values and apply scaling
+				// Use int32_t for intermediate signed 32-bit values
+				// Use uint16_t cast for low words when combining to avoid sign extension issues
+				// Use float for final calculated values
+
+				// Longitude & Latitude Calculation
+				int32_t iLon = ((int32_t)(short)sReg[LonH] << 16) | (uint16_t)sReg[LonL];
+				int32_t iLat = ((int32_t)(short)sReg[LatH] << 16) | (uint16_t)sReg[LatL];
+
+				// Convert from ddmm.mmmmm format (scaled by 100000) to decimal degrees
+				float fLon_deg = (float)(iLon / 10000000); // Extract degrees (dd)
+				float fLon_min = (float)((iLon % 10000000) / 100000.0f); // Extract minutes (mm.mmmmm)
+				float fLongitude = fLon_deg + fLon_min / 60.0f;
+
+				float fLat_deg = (float)(iLat / 10000000); // Extract degrees (dd)
+				float fLat_min = (float)((iLat % 10000000) / 100000.0f); // Extract minutes (mm.mmmmm)
+				float fLatitude = fLat_deg + fLat_min / 60.0f;
+
+				// GPS Altitude (m)
+				float fGpsAltitude = (float)(short)sReg[GPSHeight] / 10.0f;
+
+				// GPS Heading/Course (°). Note: This is course over ground, not magnetic heading.
+				float fGpsCourse = (float)(short)sReg[GPSYAW] / 100.0f;
+
+				// GPS Ground Speed (km/h)
+				int32_t iGpsSpeed = ((int32_t)(short)sReg[GPSVH] << 16) | (uint16_t)sReg[GPSVL];
+				float fGpsSpeed_kmh = (float)iGpsSpeed / 1000.0f;
+
+				// Satellite Info & Accuracy Metrics
+				int iSatellites = (uint16_t)sReg[SVNUM]; // Number of satellites is likely unsigned
+				float fPDOP = (float)(short)sReg[PDOP] / 100.0f;
+				float fHDOP = (float)(short)sReg[HDOP] / 100.0f;
+				float fVDOP = (float)(short)sReg[VDOP] / 100.0f;
+
+
     			if(s_cDataUpdate & ACC_UPDATE)
     			{
     				printf("acc:%.3f %.3f %.3f\r\n", fAcc[0], fAcc[1], fAcc[2]);
@@ -305,50 +341,16 @@ int main(void)
     				printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
     				s_cDataUpdate &= ~MAG_UPDATE;
     			}
-          if(s_cDataUpdate & GPS_UPDATE)
-          {
-            // Combine high/low registers for 32-bit values and apply scaling 
-            // Use int32_t for intermediate signed 32-bit values
-            // Use uint16_t cast for low words when combining to avoid sign extension issues
-            // Use float for final calculated values
+				if(s_cDataUpdate & GPS_UPDATE)
+				  {
+								// Print the GPS data
+					printf("GPS Lat: %.6f, Lon: %.6f, Alt: %.1fm\r\n", fLatitude, fLongitude, fGpsAltitude);
+					printf("GPS Spd: %.3fkm/h, Course: %.2fdeg\r\n", fGpsSpeed_kmh, fGpsCourse);
+					printf("GPS Sats: %d, PDOP: %.2f, HDOP: %.2f, VDOP: %.2f\r\n", iSatellites, fPDOP, fHDOP, fVDOP);
 
-            // Longitude & Latitude Calculation
-            int32_t iLon = ((int32_t)(short)sReg[LonH] << 16) | (uint16_t)sReg[LonL];
-            int32_t iLat = ((int32_t)(short)sReg[LatH] << 16) | (uint16_t)sReg[LatL];
-
-            // Convert from ddmm.mmmmm format (scaled by 100000) to decimal degrees
-            float fLon_deg = (float)(iLon / 10000000); // Extract degrees (dd)
-            float fLon_min = (float)((iLon % 10000000) / 100000.0f); // Extract minutes (mm.mmmmm)
-            float fLongitude = fLon_deg + fLon_min / 60.0f;
-
-            float fLat_deg = (float)(iLat / 10000000); // Extract degrees (dd)
-            float fLat_min = (float)((iLat % 10000000) / 100000.0f); // Extract minutes (mm.mmmmm)
-            float fLatitude = fLat_deg + fLat_min / 60.0f;
-
-            // GPS Altitude (m)
-            float fGpsAltitude = (float)(short)sReg[GPSHeight] / 10.0f;
-
-            // GPS Heading/Course (°). Note: This is course over ground, not magnetic heading.
-            float fGpsCourse = (float)(short)sReg[GPSYAW] / 100.0f;
-
-            // GPS Ground Speed (km/h)
-            int32_t iGpsSpeed = ((int32_t)(short)sReg[GPSVH] << 16) | (uint16_t)sReg[GPSVL];
-            float fGpsSpeed_kmh = (float)iGpsSpeed / 1000.0f;
-
-            // Satellite Info & Accuracy Metrics
-            int iSatellites = (uint16_t)sReg[SVNUM]; // Number of satellites is likely unsigned
-            float fPDOP = (float)(short)sReg[PDOP] / 100.0f;
-            float fHDOP = (float)(short)sReg[HDOP] / 100.0f;
-            float fVDOP = (float)(short)sReg[VDOP] / 100.0f;
-
-            // Print the GPS data
-            printf("GPS Lat: %.6f, Lon: %.6f, Alt: %.1fm\r\n", fLatitude, fLongitude, fGpsAltitude);
-            printf("GPS Spd: %.3fkm/h, Course: %.2fdeg\r\n", fGpsSpeed_kmh, fGpsCourse);
-            printf("GPS Sats: %d, PDOP: %.2f, HDOP: %.2f, VDOP: %.2f\r\n", iSatellites, fPDOP, fHDOP, fVDOP);
-
-            // Clear the GPS update flag
-            s_cDataUpdate &= ~GPS_UPDATE;
-        }
+					// Clear the GPS update flag
+					//s_cDataUpdate &= ~GPS_UPDATE;
+				}
 
                 s_cDataUpdate = 0;
     		}
@@ -548,7 +550,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 9600;
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -596,7 +598,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 9600;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
