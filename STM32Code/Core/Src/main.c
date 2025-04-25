@@ -26,6 +26,8 @@
 #include "ring_buffer.h"
 #include "AS5600.h"
 #include "servo_controls.h"
+#include "rudder_control.h"
+#include "gps_navigation.h" 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,6 +68,8 @@ UART_HandleTypeDef huart3;
 //wit variables ->
 static char s_cDataUpdate = 0;//wit update var
 //defs
+float target_lat = 37.123456;    //Replace with target lat
+float target_lon = -122.654321; //Replace with target lon
 ring_buffer uart_ring_buffer;
 ring_buffer uart2_ring_buffer;   // Separate buffer for USART2 (XBee)
 uint8_t rx_data_uart2;           // 1-byte RX variable for USART2
@@ -246,6 +250,8 @@ int main(void)
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
+  rudder_init(&htim1, TIM_CHANNEL_2); // Assuming rudder is on TIM1 CH2
+
   float angle;
   char str[] = "System Booted";
   HAL_UART_Transmit(&huart3, (uint8_t*)str, strlen(str), 2000);
@@ -259,6 +265,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //ServoController sail_servo;   //just put this in today
+	  //sail_servo.htim = &htim1;
+	  //sail_servo.channel = TIM_CHANNEL_1;
+
+	  // test_servo_sweep(&sail_servo);
+
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
 		 // printf("the angle is %f \n", angle);
@@ -347,6 +359,9 @@ int main(void)
 					printf("GPS Lat: %.6f, Lon: %.6f, Alt: %.1fm\r\n", fLatitude, fLongitude, fGpsAltitude);
 					printf("GPS Spd: %.3fkm/h, Course: %.2fdeg\r\n", fGpsSpeed_kmh, fGpsCourse);
 					printf("GPS Sats: %d, PDOP: %.2f, HDOP: %.2f, VDOP: %.2f\r\n", iSatellites, fPDOP, fHDOP, fVDOP);
+
+          rudder_adjust_from_gps(fLatitude, fLongitude, target_lat, target_lon, fGpsCourse);
+          rudder_move_to(); // This is for smooth movement
 
 					// Clear the GPS update flag
 					//s_cDataUpdate &= ~GPS_UPDATE;
@@ -816,6 +831,18 @@ static void AutoScanSensor(void)
 	printf("can not find sensor\r\n");
 	printf("please check your connection\r\n");
 }
+
+void test_servo_sweep(ServoController *servo) {     //Just put it in today
+    for (uint16_t pulse = 500; pulse <= 2500; pulse += 10) {
+        __HAL_TIM_SET_COMPARE(servo->htim, servo->channel, pulse);
+        HAL_Delay(20);
+    }
+    for (uint16_t pulse = 2500; pulse >= 500; pulse -= 10) {
+        __HAL_TIM_SET_COMPARE(servo->htim, servo->channel, pulse);
+        HAL_Delay(20);
+    }
+}
+
 /* USER CODE END 4 */
 
  /* MPU Configuration */
