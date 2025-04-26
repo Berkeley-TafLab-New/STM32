@@ -32,6 +32,8 @@ uint16_t ring_buffer_availible(ring_buffer *p_ring_buf){
     return (RING_BUFFER_SIZE + p_ring_buf->head - p_ring_buf->tail)%RING_BUFFER_SIZE;
 }
 
+
+// dont remember why I wrote this ...
 void send_to_ring_buffer(void* r_buff, const char* format, uint32_t value) {
     char buffer[64]; // Adjust size based on your needs
     int length;

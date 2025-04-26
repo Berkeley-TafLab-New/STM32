@@ -26,6 +26,7 @@
 #include "ring_buffer.h"
 #include "AS5600.h"
 #include "servo_controls.h"
+#include "rudder_control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,6 +74,7 @@ uint8_t rx_data_s; // Single byte for receiving data
 uint8_t rx_data_xbee; //single Byte from Xbee
 uint8_t ucRxData = 0;//Single Byte Rx fOr Witmotion
 char command_buffer[COMMAND_MAX_LENGTH]; // To hold the extracted command
+char command_buffer_xbee[COMMAND_MAX_LENGTH];
 uint32_t uiBuad = 115200;
 /* USER CODE END PV */
 
@@ -98,7 +100,7 @@ static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum);
 /* USER CODE BEGIN 0 */
 int __io_putchar(int ch) {
     HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
-     //HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY); enable to get debug over STLINK
+     //HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 1); //enable to get debug over STLINK
 
     return ch;
 }
@@ -110,8 +112,21 @@ void System_Init(void) {
 
   // Start UART reception in interrupt mode
   HAL_UART_Receive_IT(&huart3, &rx_data_s, 1); // initialising Stlink interrupts
-  HAL_UART_Receive_IT(&huart2, &rx_data_xbee, 1); // initialising XBee interrupts
+  HAL_UART_Receive_IT(&huart2, &rx_data_uart2, 1); // initialising XBee interrupts
   HAL_UART_Receive_IT(&huart1, &ucRxData, 1);
+
+  //Start the rudder
+  // Initialize rudder control
+  rudder_init(&htim1, TIM_CHANNEL_2);
+
+  // Set initial rudder position
+  rudder_target_angle = rudder_straight;
+  rudder_current_angle = rudder_straight;
+  uint32_t initial_pulse = 500 + (rudder_current_angle * (2000.0f / 180.0f));
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, initial_pulse);
+
+  // Start PWM for rudder servo
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
  }
  
@@ -128,8 +143,34 @@ void System_Init(void) {
 
   if (huart->Instance == USART3) { // Ensure this is for the correct UART instance
       // Add received byte to the ring buffer
-     printf("Received");
       ring_buffer_put(&uart_ring_buffer, rx_data_s);
+
+
+      //adding manual rudder controls
+
+      if (rx_data_uart2 == '[') {
+              // Move rudder left
+              rudder_target_angle -= 5.0f;
+              if (rudder_target_angle < (rudder_straight - rudder_range))
+                  rudder_target_angle = rudder_straight - rudder_range;
+
+              char response[40];
+              sprintf(response, "Rudder LEFT: %.1f degrees\r\n", rudder_target_angle);
+              HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
+
+          }
+          else if (rx_data_uart2 == ']') {
+              // Move rudder right
+              rudder_target_angle += 5.0f;
+              if (rudder_target_angle > (rudder_straight + rudder_range))
+                  rudder_target_angle = rudder_straight + rudder_range;
+
+              char response[40];
+              sprintf(response, "Rudder RIGHT: %.1f degrees\r\n", rudder_target_angle);
+              HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
+          }
+
+
       // Check if we received a carriage return '\r' (end of command)
       if (rx_data_s == '\r') {
           uint8_t data;
@@ -143,7 +184,7 @@ void System_Init(void) {
           const char *response;
           if (strcmp(command_buffer, "hello") == 0) {
               response = "Hello to you too!\n";
-          } else if (strcmp(command_buffer, "setzero") == 0) {
+          } else if (strcmp(command_buffer, "setzerouart") == 0) {
               if (AS5600_config_ZPOS(&hi2c1) == HAL_OK) {
                   response = "ZPOS set successfully.\n";
               } else {
@@ -163,34 +204,38 @@ void System_Init(void) {
     
   if (huart->Instance == USART2) {
     ring_buffer_put(&uart2_ring_buffer, rx_data_uart2);
-
+    printf("Recieved on Xbee!");
     if (rx_data_uart2 == '\r') {
         uint8_t data;
         uint16_t index = 0;
 
         while (ring_buffer_get(&uart2_ring_buffer, &data) && data != '\r' && index < COMMAND_MAX_LENGTH - 1) {
-            command_buffer[index++] = (char)data;
+            command_buffer_xbee[index++] = (char)data;
         }
-        command_buffer[index] = '\0';
+        command_buffer_xbee[index] = '\0';
 
         const char *response;
-        if (strcmp(command_buffer, "hello") == 0) {
+        if (strcmp(command_buffer_xbee, "hello") == 0) {
             response = "Hello to you Xbee!\n";
-        } else if (strcmp(command_buffer, "setzero") == 0) {
+        } else if (strcmp(command_buffer_xbee, "setzero") == 0) { // make it a switch case
             if (AS5600_config_ZPOS(&hi2c1) == HAL_OK) {
-                response = "ZPOS set successfully.\n";
+                response = "ZPOS set successfully via xbee.\n";
             } else {
-                response = "Failed to set ZPOS.\n";
+                response = "Failed to set ZPOS via Xbee.\n";
             }
         } else {
             response = "Unrecognized command from XBee\n";
         }
 
         HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
-        memset(command_buffer, 0, COMMAND_MAX_LENGTH);
+        printf(response);
+        memset(command_buffer_xbee, 0, COMMAND_MAX_LENGTH);
     }
 
-    HAL_UART_Receive_IT(&huart2, &rx_data_uart2, 1); // Restart interrupt
+
+    //HAL_UART_Receive_IT(&huart2, &rx_data_uart2, 1); // Restart interrupt
+    UART_Start_Receive_IT(huart, &rx_data_uart2, 1);
+
   }
 
 
@@ -270,7 +315,7 @@ int main(void)
 	  }
     
 	  copy_wind_pos(&sail_servo, angle);
-
+	  rudder_move_to();
 
     if(s_cDataUpdate)
     		{
@@ -797,7 +842,7 @@ static void AutoScanSensor(void)
 	
 	for(i = 0; i < 9; i++)
 	{
-        uiBuad = c_uiBaud[i];
+        uiBuad = c_uiBaud[i]; // literal waste of time for loop only kept it around cause it looks like a nice blocking loading sequence in serial
         HAL_Delay(250); // Settling time
 		iRetry = 2;
 		do
