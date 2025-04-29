@@ -122,8 +122,7 @@ void System_Init(void) {
   rudder_init(&htim1, TIM_CHANNEL_2);
 
   // Set initial rudder position
-  rudder_target_angle = rudder_straight;
-  rudder_current_angle = rudder_straight;
+  rudder_set_target_angle(rudder_get_straight());
 
  }
  
