@@ -183,24 +183,39 @@ void System_Init(void) {
 
     if (rx_data_uart2 == '[') {
             // Move rudder left
-            rudder_target_angle -= 5.0f;
-            if (rudder_target_angle < (rudder_straight - rudder_range))
-                rudder_target_angle = rudder_straight - rudder_range;
-
+            float angle = rudder_get_target_angle();
+            angle -= 5.0f;
+            
+            float min = rudder_get_straight() - rudder_get_range();
+            if (angle < min)
+            {
+              angle = min;
+            }
+            rudder_set_target_angle(angle);
+            
             char response[40];
-            sprintf(response, "Rudder LEFT: %.1f degrees\r\n", rudder_target_angle);
+            sprintf(response, "Rudder LEFT: %.1f degrees\r\n", angle);
             HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
+            
 
         }
         else if (rx_data_uart2 == ']') {
             // Move rudder right
-            rudder_target_angle += 5.0f;
-            if (rudder_target_angle > (rudder_straight + rudder_range))
-                rudder_target_angle = rudder_straight + rudder_range;
-
+            float angle = rudder_get_target_angle();
+            angle += 5.0f;
+            
+            float max = rudder_get_straight() + rudder_get_range();
+            if (angle > max) 
+            {
+              angle = max;
+            }
+            
+            rudder_set_target_angle(angle);
+            
             char response[40];
-            sprintf(response, "Rudder RIGHT: %.1f degrees\r\n", rudder_target_angle);
+            sprintf(response, "Rudder RIGHT: %.1f degrees\r\n", angle);
             HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
+            
         }
 
     if (rx_data_uart2 == '\r') {

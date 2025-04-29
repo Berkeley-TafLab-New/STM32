@@ -31,6 +31,23 @@ void rudder_move_to(void) {
         }
 
         uint32_t pulse_width = 500 + (rudder_current_angle * (2000.0f / 180.0f));
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pulse_width);
+        __HAL_TIM_SET_COMPARE(rudder_htim, rudder_channel, pulse_width);
     }
+
+    float rudder_get_target_angle(void) {
+        return rudder_target_angle;
+    }
+    
+    void rudder_set_target_angle(float angle) {
+        rudder_target_angle = angle;
+    }
+    
+    float rudder_get_straight(void) {
+        return rudder_straight;
+    }
+    
+    float rudder_get_range(void) {
+        return rudder_range;
+    }
+    
 }
