@@ -1,6 +1,6 @@
 
 #include "rudder_control.h"
-
+#include "servo_controls.h"
 void rudder_init(TIM_HandleTypeDef *htim, uint32_t channel) {
     rudder_htim = htim;
     rudder_channel = channel;

@@ -44,7 +44,7 @@
             current_pulse_width--; 
             __HAL_TIM_SET_COMPARE(htim, channel, current_pulse_width);
 
-            HAL_Delay(10);
+            HAL_Delay(3);
             current_pulse_width = __HAL_TIM_GET_COMPARE(htim, channel); 
         }
       
@@ -58,7 +58,8 @@
       adj_angle = 180.0f;
     }
     
-    set_servo_angle(ctrl->htim, ctrl->channel, adj_angle);
+    //set_servo_angle(ctrl->htim, ctrl->channel, adj_angle);
+    set_servo_angle_gradual(ctrl->htim, ctrl->channel, adj_angle);
   
 
     //set_servo_angle();

@@ -58,6 +58,7 @@
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
@@ -87,6 +88,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 //wit function prototypes ->
@@ -122,11 +124,6 @@ void System_Init(void) {
   // Set initial rudder position
   rudder_target_angle = rudder_straight;
   rudder_current_angle = rudder_straight;
-  uint32_t initial_pulse = 500 + (rudder_current_angle * (2000.0f / 180.0f));
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, initial_pulse);
-
-  // Start PWM for rudder servo
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
  }
  
@@ -144,32 +141,6 @@ void System_Init(void) {
   if (huart->Instance == USART3) { // Ensure this is for the correct UART instance
       // Add received byte to the ring buffer
       ring_buffer_put(&uart_ring_buffer, rx_data_s);
-
-
-      //adding manual rudder controls
-
-      if (rx_data_uart2 == '[') {
-              // Move rudder left
-              rudder_target_angle -= 5.0f;
-              if (rudder_target_angle < (rudder_straight - rudder_range))
-                  rudder_target_angle = rudder_straight - rudder_range;
-
-              char response[40];
-              sprintf(response, "Rudder LEFT: %.1f degrees\r\n", rudder_target_angle);
-              HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
-
-          }
-          else if (rx_data_uart2 == ']') {
-              // Move rudder right
-              rudder_target_angle += 5.0f;
-              if (rudder_target_angle > (rudder_straight + rudder_range))
-                  rudder_target_angle = rudder_straight + rudder_range;
-
-              char response[40];
-              sprintf(response, "Rudder RIGHT: %.1f degrees\r\n", rudder_target_angle);
-              HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
-          }
-
 
       // Check if we received a carriage return '\r' (end of command)
       if (rx_data_s == '\r') {
@@ -204,7 +175,34 @@ void System_Init(void) {
     
   if (huart->Instance == USART2) {
     ring_buffer_put(&uart2_ring_buffer, rx_data_uart2);
-    printf("Recieved on Xbee!");
+
+
+
+
+    //adding manual rudder controls
+
+    if (rx_data_uart2 == '[') {
+            // Move rudder left
+            rudder_target_angle -= 5.0f;
+            if (rudder_target_angle < (rudder_straight - rudder_range))
+                rudder_target_angle = rudder_straight - rudder_range;
+
+            char response[40];
+            sprintf(response, "Rudder LEFT: %.1f degrees\r\n", rudder_target_angle);
+            HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
+
+        }
+        else if (rx_data_uart2 == ']') {
+            // Move rudder right
+            rudder_target_angle += 5.0f;
+            if (rudder_target_angle > (rudder_straight + rudder_range))
+                rudder_target_angle = rudder_straight + rudder_range;
+
+            char response[40];
+            sprintf(response, "Rudder RIGHT: %.1f degrees\r\n", rudder_target_angle);
+            HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
+        }
+
     if (rx_data_uart2 == '\r') {
         uint8_t data;
         uint16_t index = 0;
@@ -275,10 +273,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM1_Init();
-  MX_USART1_UART_Init();
-  MX_USART2_UART_Init();
   MX_USART3_UART_Init();
+  MX_USART2_UART_Init();
   MX_I2C1_Init();
+  MX_USART1_UART_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
 
@@ -289,7 +288,10 @@ int main(void)
   System_Init();
   AutoScanSensor();
 
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//sail
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);//propellor
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);//rudder
+
 
   float angle;
   char str[] = "System Booted";
@@ -552,7 +554,6 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.Pulse = 1500;
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -576,6 +577,55 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 64-1;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 20000-1;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 5000;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
 
 }
 
@@ -739,10 +789,10 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
