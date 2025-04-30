@@ -58,6 +58,7 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
     "stdint.h": "c",
-    "as5600.h": "c"
+    "as5600.h": "c",
+    "servo_controls.h": "c"
   }
 }

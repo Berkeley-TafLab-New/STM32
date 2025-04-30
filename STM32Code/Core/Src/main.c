@@ -331,7 +331,7 @@ int main(void)
 	  }
     
 	  copy_wind_pos(&sail_servo, angle);
-	  rudder_move_to();
+	  rudder_update();
 
     if(s_cDataUpdate)
     		{

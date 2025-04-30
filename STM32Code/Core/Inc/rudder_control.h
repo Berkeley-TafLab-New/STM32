@@ -4,20 +4,19 @@
 #include "main.h"
 #include "math.h"
 
-// External variables if needed
-extern const float rudder_straight;
-extern const float rudder_range;
+// External constants 
 
 
-// Getter/setter functions
-float rudder_get_target_angle(void);
+// API functions
+void rudder_init(TIM_HandleTypeDef *htim, uint32_t channel);
 void rudder_set_target_angle(float angle);
+float rudder_get_target_angle(void);
 float rudder_get_straight(void);
 float rudder_get_range(void);
 
-// Existing functions
-void rudder_init(TIM_HandleTypeDef *htim, uint32_t channel);
+// Smooth update toward target angle
+void rudder_update(void); 
+
 void rudder_turn_to(float bearing, float directionBearing);
-void rudder_move_to(void);
 
 #endif
