@@ -10,8 +10,8 @@
 ../Core/Src/main.c:699:13:MX_USART2_UART_Init	5
 ../Core/Src/main.c:749:13:MX_USART3_UART_Init	5
 ../Core/Src/main.c:797:13:MX_GPIO_Init	1
-../Core/Src/main.c:855:13:SensorUartSend	1
-../Core/Src/main.c:859:13:CopeSensorData	7
-../Core/Src/main.c:902:13:AutoScanSensor	4
-../Core/Src/main.c:932:6:MPU_Config	1
-../Core/Src/main.c:963:6:Error_Handler	1
+../Core/Src/main.c:854:13:SensorUartSend	1
+../Core/Src/main.c:858:13:CopeSensorData	7
+../Core/Src/main.c:901:13:AutoScanSensor	4
+../Core/Src/main.c:931:6:MPU_Config	1
+../Core/Src/main.c:962:6:Error_Handler	1
