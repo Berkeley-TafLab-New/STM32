@@ -27,6 +27,7 @@
 #include "AS5600.h"
 #include "servo_controls.h"
 #include "rudder_control.h"
+#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,6 +78,10 @@ uint8_t ucRxData = 0;//Single Byte Rx fOr Witmotion
 char command_buffer[COMMAND_MAX_LENGTH]; // To hold the extracted command
 char command_buffer_xbee[COMMAND_MAX_LENGTH];
 uint32_t uiBuad = 115200;
+
+volatile bool process_set_zpos_uart3 = false;
+volatile bool process_set_zpos_uart2 = false;
+volatile bool zpos_configured_this_session = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -314,6 +319,7 @@ int main(void)
   ServoController sail_servo;
   sail_servo.htim= &htim1;
   sail_servo.channel = TIM_CHANNEL_1;
+  HAL_StatusTypeDef init_2c_status = AS5600_config_ZPOS(&hi2c1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -322,7 +328,7 @@ int main(void)
   {
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
-		 // printf("the angle is %f \n", angle);
+		//printf("the angle is %f \n", angle);
 	  }
 	  
 	  if (i2c_status != HAL_OK) {
@@ -380,7 +386,7 @@ int main(void)
 				float fHDOP = (float)(short)sReg[HDOP] / 100.0f;
 				float fVDOP = (float)(short)sReg[VDOP] / 100.0f;
 
-
+				/*
     			if(s_cDataUpdate & ACC_UPDATE)
     			{
     				printf("acc:%.3f %.3f %.3f\r\n", fAcc[0], fAcc[1], fAcc[2]);
@@ -411,7 +417,18 @@ int main(void)
 
 					// Clear the GPS update flag
 					//s_cDataUpdate &= ~GPS_UPDATE;
-				}
+				*/
+				  printf("AccX,AccY,AccZ,GyroX,GyroY,GyroZ,Roll,Pitch,YawIMU,MagX,MagY,MagZ,Lat,Lon,Alt,Speed,Course,Sats,PDOP,HDOP,VDOP\r\n");
+		          printf("%.3f,%.3f,%.3f,", fAcc[0], fAcc[1], fAcc[2]);          // AccX, AccY, AccZ
+		          printf("%.3f,%.3f,%.3f,", fGyro[0], fGyro[1], fGyro[2]);       // GyroX, GyroY, GyroZ
+		          printf("%.3f,%.3f,%.3f,", fAngle[0], fAngle[1], fAngle[2]);    // Roll, Pitch (AngleZ)
+		          printf("%.3f,", fYaw);                                         // YawIMU
+		          printf("%d,%d,%d,", sReg[HX], sReg[HY], sReg[HZ]);             // MagX, MagY, MagZ
+		          printf("%.6f,%.6f,%.1f,", fLatitude, fLongitude, fGpsAltitude); // Lat, Lon, Alt
+		          printf("%.3f,%.2f,", fGpsSpeed_kmh, fGpsCourse);               // Speed, Course
+		          printf("%d,%.2f,%.2f,%.2f", iSatellites, fPDOP, fHDOP, fVDOP); // Sats, PDOP, HDOP, VDOP
+		          printf("\r\n"); // End of CSV line
+
 
                 s_cDataUpdate = 0;
     		}

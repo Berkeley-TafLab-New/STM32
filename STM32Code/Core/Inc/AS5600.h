@@ -11,7 +11,8 @@
 #include "stm32h7xx_hal.h"
 
 #define AS5600_ADRESS 0x36 // 7-bit I2C address
-#define AS5600_RAW_ANGLE_REG   0x0C    // Raw angle register (12-bit)
+#define AS5600_RAW_ANGLE_REG   0x0C    // Raw angle register (12-bit) 0x0E for scaled angle
+#define AS5600_SCALED_ANGLE_REG 0x0E
 #define AS5600_ZPOS_HI_REG 0x01
 #define AS5600_ZPOS_LO_REG 0x02
 

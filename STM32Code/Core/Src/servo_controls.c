@@ -31,11 +31,9 @@
     /*set a servo angle by taking the channel angle and tim and the channel*/
      uint32_t current_pulse_width = __HAL_TIM_GET_COMPARE(htim, channel); // returns current pulse width(between 500 and 2500)
      uint32_t desired_pulse_width = 500 +(angle*((2500-500)/180));
-     while (desired_pulse_width != current_pulse_width){
         if (desired_pulse_width > current_pulse_width){
             current_pulse_width++; 
             __HAL_TIM_SET_COMPARE(htim, channel, current_pulse_width);
-            HAL_Delay(10);
             current_pulse_width = __HAL_TIM_GET_COMPARE(htim, channel);
 
         }
@@ -44,11 +42,10 @@
             current_pulse_width--; 
             __HAL_TIM_SET_COMPARE(htim, channel, current_pulse_width);
 
-            HAL_Delay(3);
             current_pulse_width = __HAL_TIM_GET_COMPARE(htim, channel); 
         }
       
-    }
+
   }
   void copy_wind_pos(ServoController *ctrl, float wind_angle){
     float adj_angle=  fmod(wind_angle, 180.0f);  //all opposite angles are the same so 200 degrees = 20 degrees 

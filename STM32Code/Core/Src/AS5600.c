@@ -14,7 +14,7 @@ HAL_StatusTypeDef AS5600_read_angle(I2C_HandleTypeDef *hi2c, float *angle){
     
     HAL_StatusTypeDef ret ;
     uint8_t angle_buff[2]; // hold the 2 bits from the Raw Angle 
-    ret = HAL_I2C_Mem_Read(hi2c, (AS5600_ADRESS<<1), AS5600_RAW_ANGLE_REG, I2C_MEMADD_SIZE_8BIT,angle_buff,2,HAL_MAX_DELAY);//HAL_MAX_DELAY is blockling 
+    ret = HAL_I2C_Mem_Read(hi2c, (AS5600_ADRESS<<1), AS5600_SCALED_ANGLE_REG, I2C_MEMADD_SIZE_8BIT,angle_buff,2,HAL_MAX_DELAY);//HAL_MAX_DELAY is blockling
     if (ret != HAL_OK){
     	handle_error(ret);
     }
@@ -44,42 +44,47 @@ uint8_t check_magnet_presence(I2C_HandleTypeDef *hi2c) {
     }
 }
 
-
-
 HAL_StatusTypeDef AS5600_config_ZPOS(I2C_HandleTypeDef *hi2c) {
     HAL_StatusTypeDef ret;
-    uint8_t angle_buff;
+    uint8_t angle_read_buff[2]; // Buffer for reading raw angle
 
-    // Read current raw angle
-    ret = HAL_I2C_Mem_Read(hi2c, (AS5600_ADRESS<<1), AS5600_RAW_ANGLE_REG,
-                          I2C_MEMADD_SIZE_8BIT, angle_buff, 2, HAL_MAX_DELAY);
+    // Read current raw angle (2 bytes) from 0x0C
+    ret = HAL_I2C_Mem_Read(hi2c, (AS5600_ADRESS << 1), AS5600_RAW_ANGLE_REG,
+                          I2C_MEMADD_SIZE_8BIT, angle_read_buff, 2, HAL_MAX_DELAY);
     if (ret != HAL_OK) {
         handle_error(ret);
         return ret;
     }
 
-    // Extract 12-bit raw angle
-    uint16_t raw_angle = ((angle_buff << 8) | angle_buff) & 0x0FFF;
+    // Extract 12-bit raw angle: angle_read_buff[0] is high, angle_read_buff[1] is low
+    uint16_t raw_angle = (((uint16_t)angle_read_buff[0] << 8) | angle_read_buff[1]) & 0x0FFF;
 
-    // Split into ZPOS register values
-    uint8_t zpos_data = {
-        (uint8_t)((raw_angle >> 8) & 0x0F),  // High byte (4 bits)
-        (uint8_t)(raw_angle & 0xFF)          // Low byte (8 bits)
-    };
+    // Prepare ZPOS register values
+    uint8_t zpos_data[2];
+    zpos_data[0] = (uint8_t)((raw_angle >> 8) & 0x0F); // High byte for ZPOS_HI (Reg 0x01)
+    zpos_data[1] = (uint8_t)(raw_angle & 0xFF);       // Low byte for ZPOS_LO (Reg 0x02)
 
-    // Write to ZPOS registers
-    ret = HAL_I2C_Mem_Write(hi2c, (AS5600_ADRESS<<1), AS5600_ZPOS_HI_REG,
-                           I2C_MEMADD_SIZE_8BIT, &zpos_data, 1, HAL_MAX_DELAY);
-    if (ret != HAL_OK) return ret;
-
-    ret = HAL_I2C_Mem_Write(hi2c, (AS5600_ADRESS<<1), AS5600_ZPOS_LO_REG,
-                           I2C_MEMADD_SIZE_8BIT, &zpos_data, 1, HAL_MAX_DELAY);
-    return ret;
-
+    // Write High byte to ZPOS_HI register (0x01)
+    ret = HAL_I2C_Mem_Write(hi2c, (AS5600_ADRESS << 1), AS5600_ZPOS_HI_REG,
+                           I2C_MEMADD_SIZE_8BIT, &zpos_data[0], 1, HAL_MAX_DELAY);
+    if (ret != HAL_OK) {
+        handle_error(ret);
+        return ret;
     }
 
+    // Write Low byte to ZPOS_LO register (0x02)
+    ret = HAL_I2C_Mem_Write(hi2c, (AS5600_ADRESS << 1), AS5600_ZPOS_LO_REG,
+                           I2C_MEMADD_SIZE_8BIT, &zpos_data[1], 1, HAL_MAX_DELAY);
 
+    if (ret != HAL_OK) {
+        handle_error(ret);
+    }
 
+    // Optional: Small delay might be needed for sensor processing
+    // HAL_Delay(10);
+
+    return ret; // Return the status of the last write operation
+}
 
 
 
