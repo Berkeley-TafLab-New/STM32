@@ -33,7 +33,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
  ../Core/Inc/wit_c_sdk.h ../Core/Inc/REG.h ../Core/Inc/ring_buffer.h \
  ../Core/Inc/AS5600.h ../Core/Inc/servo_controls.h \
- ../Core/Inc/rudder_control.h ../Core/Inc/main.h
+ ../Core/Inc/rudder_control.h ../Core/Inc/main.h \
+ ../Core/Inc/propeller_control.h
 ../Core/Inc/main.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h:
 ../Core/Inc/stm32h7xx_hal_conf.h:
@@ -74,3 +75,4 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/servo_controls.h:
 ../Core/Inc/rudder_control.h:
 ../Core/Inc/main.h:
+../Core/Inc/propeller_control.h:

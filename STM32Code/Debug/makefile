@@ -60,8 +60,8 @@ all: main-build
 main-build: STM32Code.elf secondary-outputs
 
 # Tool invocations
-STM32Code.elf STM32Code.map: $(OBJS) $(USER_OBJS) C:\Users\arnav\Projects\ELCAPITAN\STM32\STM32Code\STM32H723ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "STM32Code.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\arnav\Projects\ELCAPITAN\STM32\STM32Code\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32Code.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
+STM32Code.elf STM32Code.map: $(OBJS) $(USER_OBJS) /Users/vikram/Desktop/STM32/STM32/STM32Code/STM32H723ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "STM32Code.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"/Users/vikram/Desktop/STM32/STM32/STM32Code/STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32Code.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

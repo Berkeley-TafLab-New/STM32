@@ -28,6 +28,7 @@
 #include "servo_controls.h"
 #include "rudder_control.h"
 #include "stdbool.h"
+#include "propeller_control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -125,9 +126,12 @@ void System_Init(void) {
   //Start the rudder
   // Initialize rudder control
   rudder_init(&htim1, TIM_CHANNEL_2);
+  propeller_init(&htim2, TIM_CHANNEL_1); // Initialize propeller control
 
   // Set initial rudder position
   rudder_set_target_angle(rudder_get_straight());
+
+  propeller_set_speed(0.0f); // Set initial propeller speed to 0
 
  }
  
@@ -220,6 +224,19 @@ void System_Init(void) {
             sprintf(response, "Rudder RIGHT: %.1f degrees\r\n", angle);
             HAL_UART_Transmit(&huart2, (uint8_t *)response, strlen(response), 100);
             
+        }
+        else if (rx_data_uart2 == 'f') {
+          float speed = propeller_get_speed();
+          speed += 10.0f;
+          if (speed > 100.0f) speed = 100.0f;
+          propeller_set_speed(speed);
+          char msg[40];
+          sprintf(msg, "Propeller speed: %.1f%%\r\n", speed);
+          HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+        } 
+        else if (rx_data_uart2 == 's') {
+          propeller_stop();
+          HAL_UART_Transmit(&huart2, (uint8_t*)"Propeller STOPPED\r\n", 19, 100);
         }
 
     if (rx_data_uart2 == '\r') {
