@@ -79,6 +79,7 @@ uint8_t ucRxData = 0;//Single Byte Rx fOr Witmotion
 char command_buffer[COMMAND_MAX_LENGTH]; // To hold the extracted command
 char command_buffer_xbee[COMMAND_MAX_LENGTH];
 uint32_t uiBuad = 115200;
+uint8_t auton = 1;
 
 volatile bool process_set_zpos_uart3 = false;
 volatile bool process_set_zpos_uart2 = false;
@@ -107,7 +108,7 @@ static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 int __io_putchar(int ch) {
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
      //HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 1); //enable to get debug over STLINK
 
     return ch;
@@ -169,9 +170,15 @@ void System_Init(void) {
               } else {
                   response = "Failed to set ZPOS.\n";
               }
-          } else {
+          }else if (strcmp(command_buffer, "auto") == 0) {
+        	  auton = 1;
+          }else if (strcmp(command_buffer, "nauto") == 0) {
+        	  auton = 0;
+          }
+          else {
               response = "Uh oh, something didn't work...\n";
           }
+
           // Transmit the response
           HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
           // Clear the command buffer for reuse
@@ -239,6 +246,13 @@ void System_Init(void) {
           HAL_UART_Transmit(&huart2, (uint8_t*)"Propeller STOPPED\r\n", 19, 100);
         }
 
+    	if (rx_data_uart2 == '0'){ // Add reset command check
+                            printf( "Resetting system via XBee...\n");
+                            HAL_Delay(100); // Short delay for UART TX
+                            NVIC_SystemReset(); // Perform the reset
+                             // Code execution will not continue past this point
+                        }
+
     if (rx_data_uart2 == '\r') {
         uint8_t data;
         uint16_t index = 0;
@@ -250,14 +264,20 @@ void System_Init(void) {
 
         const char *response;
         if (strcmp(command_buffer_xbee, "hello") == 0) {
+
+
             response = "Hello to you Xbee!\n";
+
+
         } else if (strcmp(command_buffer_xbee, "setzero") == 0) { // make it a switch case
             if (AS5600_config_ZPOS(&hi2c1) == HAL_OK) {
                 response = "ZPOS set successfully via xbee.\n";
             } else {
                 response = "Failed to set ZPOS via Xbee.\n";
             }
-        } else {
+
+        }
+        else {
             response = "Unrecognized command from XBee\n";
         }
 
@@ -345,7 +365,7 @@ int main(void)
   {
 	  HAL_StatusTypeDef i2c_status = AS5600_read_angle(&hi2c1, &angle);
 	  if (i2c_status== HAL_OK){
-		//printf("the angle is %f \n", angle);
+		printf("the angle is %f \n", angle);
 	  }
 	  
 	  if (i2c_status != HAL_OK) {

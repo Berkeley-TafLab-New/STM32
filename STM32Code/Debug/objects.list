@@ -1,5 +1,6 @@
 "./Core/Src/AS5600.o"
 "./Core/Src/main.o"
+"./Core/Src/prop.o"
 "./Core/Src/propeller_control.o"
 "./Core/Src/ring_buffer.o"
 "./Core/Src/rudder_control.o"
